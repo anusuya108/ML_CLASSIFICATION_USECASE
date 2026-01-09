@@ -2,6 +2,8 @@ import os
 import pickle
 import numpy as np
 import streamlit as st
+st.write(" App Loaded Successfully")
+
 st.set_page_config(page_title="UC-1 Customer Churn", layout="centered")
 @st.cache_resource
 def load_uc1():
