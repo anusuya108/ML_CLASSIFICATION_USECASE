@@ -2,10 +2,10 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 import os
-import pickle
 import joblib
+import dill   # ✅ critical fix
 
-# 🔑 IMPORTANT: Import the same classes used during training
+# Import same classes used during training
 from imblearn.over_sampling import SMOTE
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
@@ -15,21 +15,28 @@ from sklearn.svm import SVC
 st.set_page_config(page_title="UC2 Cart Abandonment Risk", layout="centered")
 
 # ============================
-# LOAD UC2 MODEL (NO RETRAINING)
+# LOAD UC2 MODEL (DILL FALLBACK)
 # ============================
 @st.cache_resource
 def load_uc2():
-    model_path = "uc2_model.pkl"   # File already in your repo
+    model_path = "uc2_model.pkl"
 
+    # Try joblib first
     try:
-        # Try loading with joblib first
         model = joblib.load(model_path)
+        return model
     except Exception:
-        # Fallback to pickle if joblib fails
-        with open(model_path, "rb") as f:
-            model = pickle.load(f)
+        pass
 
-    return model
+    # Try dill (can load complex pickled objects)
+    try:
+        with open(model_path, "rb") as f:
+            model = dill.load(f)
+        return model
+    except Exception as e:
+        st.error("❌ Unable to load UC2 model. The model file is not compatible with this environment.")
+        st.exception(e)
+        st.stop()
 
 uc2_model = load_uc2()
 
