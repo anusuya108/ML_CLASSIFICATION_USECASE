@@ -11,14 +11,14 @@ st.set_page_config(page_title="Customer Churn Prediction", layout="centered")
 # ============================
 @st.cache_resource
 def load_model():
-    model_path = "uc1_model.pkl"   # model in root folder
+    model_path = "uc1_model.pkl"
     with open(model_path, "rb") as f:
         model = pickle.load(f)
     return model
 
 uc1_model = load_model()
 
-st.title(" Customer Churn Prediction (UC1)")
+st.title("📉 Customer Churn Prediction (UC1)")
 st.write("Enter customer details below to predict churn risk.")
 
 # ============================
@@ -77,21 +77,26 @@ df['Discount_Dependency'] = df['Discount_Usage_Rate'] * df['Total_Purchases']
 df['Revenue_Per_Purchase'] = df['Average_Order_Value']
 df['High_Abandonment_Flag'] = (df['Cart_Abandonment_Rate'] > 0.7).astype(int)
 
-# Final feature set (same as training)
-input_data = df.drop(columns=['Churned'], errors='ignore')
+# ============================
+# 🔑 ALIGN FEATURES WITH TRAINED MODEL
+# ============================
+model_features = uc1_model.feature_names_in_
+
+# Reindex input to match training features exactly
+input_data = df.reindex(columns=model_features, fill_value=0)
 
 # ============================
 # PREDICTION
 # ============================
-if st.button(" Predict Churn"):
+if st.button("🔍 Predict Churn"):
     prediction = uc1_model.predict(input_data)[0]
     probability = uc1_model.predict_proba(input_data)[0][1]
 
-    st.markdown("Prediction Result")
+    st.markdown("## 📊 Prediction Result")
 
     if prediction == 1:
-        st.error(" Customer is likely to **CHURN**")
+        st.error("⚠ Customer is likely to **CHURN**")
     else:
-        st.success(" Customer is likely to **STAY**")
+        st.success("✅ Customer is likely to **STAY**")
 
     st.write(f"**Churn Probability:** {probability:.2f}")
