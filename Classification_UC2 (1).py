@@ -1,25 +1,29 @@
 import pandas as pd
 import numpy as np
-import pickle
 import streamlit as st
 import os
+import joblib   # ✅ Use joblib instead of pickle
 
 st.set_page_config(page_title="UC2 Risk Prediction", layout="centered")
 
 # ============================
-# LOAD UC2 MODEL
+# LOAD UC2 MODEL (ROBUST)
 # ============================
 @st.cache_resource
 def load_uc2():
-    model_path = "uc2_model.pkl"   # ✅ Model is in root folder
-    with open(model_path, "rb") as f:
-        model = pickle.load(f)
+    model_path = "uc2_model.pkl"   # Model in root folder
+
+    # Debug: show files (optional)
+    # st.write("Files:", os.listdir())
+
+    # Load using joblib (handles sklearn pipelines safely)
+    model = joblib.load(model_path)
     return model
 
 uc2_model = load_uc2()
 
 st.title("⚠ Customer Risk Prediction (UC2)")
-st.write("Enter customer details below to predict risk category.")
+st.write("Enter customer details below to predict customer risk.")
 
 # ============================
 # USER INPUT UI
@@ -64,11 +68,8 @@ input_dict = {
 df = pd.DataFrame([input_dict])
 
 # ============================
-# FEATURE ENGINEERING (MATCH TRAINING STYLE)
+# FEATURE ENGINEERING (MATCH TRAINING)
 # ============================
-# You may adjust these if UC2 had custom features,
-# but reindexing below ensures no mismatch error.
-
 df['Engagement_Score'] = (
     df['Login_Frequency'] +
     df['Session_Duration_Avg'] +
@@ -83,8 +84,6 @@ df['High_Abandonment_Flag'] = (df['Cart_Abandonment_Rate'] > 0.7).astype(int)
 # ============================
 # 🔑 ALIGN FEATURES WITH TRAINED MODEL
 # ============================
-# This ensures column names & order EXACTLY match training
-
 model_features = uc2_model.feature_names_in_
 input_data = df.reindex(columns=model_features, fill_value=0)
 
